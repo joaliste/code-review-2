@@ -307,3 +307,61 @@ func TestRepositoryReadVehicleMap_FindByWeightRange(t *testing.T) {
 		assert.Equal(t, expectedResult, result)
 	})
 }
+
+func TestRepositoryReadVehicleMap_FindAll(t *testing.T) {
+	t.Run("Find all", func(t *testing.T) {
+		// Given
+		db := map[int]internal.Vehicle{1: {
+			Id: 1,
+			VehicleAttributes: internal.VehicleAttributes{
+				Weight: 1,
+			},
+		}, 2: {
+			Id: 2,
+			VehicleAttributes: internal.VehicleAttributes{
+				Weight: 10,
+			},
+		}, 3: {
+			Id: 3,
+			VehicleAttributes: internal.VehicleAttributes{
+				Weight: 4,
+			},
+		}}
+
+		rp := repository.NewRepositoryReadVehicleMap(db)
+		expectedResult := map[int]internal.Vehicle{1: {
+			Id: 1,
+			VehicleAttributes: internal.VehicleAttributes{
+				Weight: 1,
+			},
+		}, 2: {
+			Id: 2,
+			VehicleAttributes: internal.VehicleAttributes{
+				Weight: 10,
+			},
+		}, 3: {
+			Id: 3,
+			VehicleAttributes: internal.VehicleAttributes{
+				Weight: 4,
+			},
+		}}
+		// When
+		result, err := rp.FindAll()
+		// Then
+		assert.Nil(t, err)
+		assert.Equal(t, expectedResult, result)
+	})
+
+	t.Run("No vehicles found", func(t *testing.T) {
+		// Given
+		db := map[int]internal.Vehicle{}
+		rp := repository.NewRepositoryReadVehicleMap(db)
+
+		expectedResult := map[int]internal.Vehicle{}
+		// When
+		result, err := rp.FindAll()
+		// Then
+		assert.Nil(t, err)
+		assert.Equal(t, expectedResult, result)
+	})
+}
