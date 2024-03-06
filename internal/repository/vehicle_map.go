@@ -1,6 +1,8 @@
 package repository
 
-import "app/internal"
+import (
+	"app/internal"
+)
 
 // NewRepositoryReadVehicleMap is a function that returns a new instance of RepositoryReadVehicleMap
 func NewRepositoryReadVehicleMap(db map[int]internal.Vehicle) *RepositoryReadVehicleMap {
