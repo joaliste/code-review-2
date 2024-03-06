@@ -9,10 +9,12 @@ func NewVehicleMapMock() *VehicleMapMock {
 type VehicleMapMock struct {
 	FindByColorAndYearFunc      func(color string, fabricationYear int) (v map[int]internal.Vehicle, err error)
 	FindByBrandAndYearRangeFunc func(brand string, startYear int, endYear int) (v map[int]internal.Vehicle, err error)
+	FindByBrandFunc             func(brand string) (v map[int]internal.Vehicle, err error)
 
 	Spy struct {
 		FindByColorAndYear      int
 		FindByBrandAndYearRange int
+		FindByBrand             int
 	}
 }
 
@@ -32,8 +34,8 @@ func (v2 *VehicleMapMock) FindByBrandAndYearRange(brand string, startYear int, e
 }
 
 func (v2 *VehicleMapMock) FindByBrand(brand string) (v map[int]internal.Vehicle, err error) {
-	//TODO implement me
-	panic("implement me")
+	v2.Spy.FindByBrand++
+	return v2.FindByBrandFunc(brand)
 }
 
 func (v2 *VehicleMapMock) FindByWeightRange(fromWeight float64, toWeight float64) (v map[int]internal.Vehicle, err error) {
