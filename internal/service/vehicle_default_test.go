@@ -194,5 +194,118 @@ func TestServiceVehicleDefault_AverageMaxSpeedByBrand(t *testing.T) {
 		assert.Equal(t, expectedError, err)
 		assert.Equal(t, 1, rp.Spy.FindByBrand)
 	})
+}
+
+func TestServiceVehicleDefault_SearchByWeightRange(t *testing.T) {
+	t.Run("Find without query", func(t *testing.T) {
+		// Given
+		rp := repository.NewVehicleMapMock()
+		rp.FindAllFunc = func() (v map[int]internal.Vehicle, err error) {
+			return map[int]internal.Vehicle{1: {
+				Id: 1,
+				VehicleAttributes: internal.VehicleAttributes{
+					Brand:           "A",
+					Model:           "B",
+					Registration:    "C",
+					Color:           "D",
+					FabricationYear: 1,
+					Capacity:        1,
+					MaxSpeed:        1,
+					FuelType:        "E",
+					Transmission:    "F",
+					Weight:          1,
+					Dimensions: internal.Dimensions{
+						Height: 1,
+						Length: 1,
+						Width:  1,
+					},
+				},
+			}}, nil
+		}
+		sv := service.NewServiceVehicleDefault(rp)
+
+		expectedResult := map[int]internal.Vehicle{1: {
+			Id: 1,
+			VehicleAttributes: internal.VehicleAttributes{
+				Brand:           "A",
+				Model:           "B",
+				Registration:    "C",
+				Color:           "D",
+				FabricationYear: 1,
+				Capacity:        1,
+				MaxSpeed:        1,
+				FuelType:        "E",
+				Transmission:    "F",
+				Weight:          1,
+				Dimensions: internal.Dimensions{
+					Height: 1,
+					Length: 1,
+					Width:  1,
+				},
+			},
+		}}
+		// When
+		result, err := sv.SearchByWeightRange(internal.SearchQuery{}, false)
+		// Then
+		assert.Nil(t, err)
+		assert.Equal(t, expectedResult, result)
+		assert.Equal(t, 1, rp.Spy.FindAll)
+	})
+
+	t.Run("Find with query", func(t *testing.T) {
+		// Given
+		rp := repository.NewVehicleMapMock()
+		rp.FindByWeightRangeFunc = func(fromWeight float64, toWeight float64) (v map[int]internal.Vehicle, err error) {
+			return map[int]internal.Vehicle{1: {
+				Id: 1,
+				VehicleAttributes: internal.VehicleAttributes{
+					Brand:           "A",
+					Model:           "B",
+					Registration:    "C",
+					Color:           "D",
+					FabricationYear: 1,
+					Capacity:        1,
+					MaxSpeed:        1,
+					FuelType:        "E",
+					Transmission:    "F",
+					Weight:          1,
+					Dimensions: internal.Dimensions{
+						Height: 1,
+						Length: 1,
+						Width:  1,
+					},
+				},
+			}}, nil
+		}
+		sv := service.NewServiceVehicleDefault(rp)
+
+		expectedResult := map[int]internal.Vehicle{1: {
+			Id: 1,
+			VehicleAttributes: internal.VehicleAttributes{
+				Brand:           "A",
+				Model:           "B",
+				Registration:    "C",
+				Color:           "D",
+				FabricationYear: 1,
+				Capacity:        1,
+				MaxSpeed:        1,
+				FuelType:        "E",
+				Transmission:    "F",
+				Weight:          1,
+				Dimensions: internal.Dimensions{
+					Height: 1,
+					Length: 1,
+					Width:  1,
+				},
+			},
+		}}
+		// When
+		result, err := sv.SearchByWeightRange(internal.SearchQuery{FromWeight: 0, ToWeight: 2}, true)
+		// Then
+		assert.Nil(t, err)
+		assert.Equal(t, expectedResult, result)
+		assert.Equal(t, 0, rp.Spy.FindAll)
+		assert.Equal(t, 1, rp.Spy.FindByWeightRange)
+	})
 
 }
