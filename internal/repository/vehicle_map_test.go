@@ -72,3 +72,81 @@ func TestRepositoryReadVehicleMap_FindByColorAndYear(t *testing.T) {
 		assert.Equal(t, expectedResult, result)
 	})
 }
+
+func TestRepositoryReadVehicleMap_FindByBrandAndYearRange(t *testing.T) {
+	// Given
+	db := map[int]internal.Vehicle{1: {
+		Id: 1,
+		VehicleAttributes: internal.VehicleAttributes{
+			Brand:           "A",
+			FabricationYear: 2008,
+		},
+	}, 2: {
+		Id: 2,
+		VehicleAttributes: internal.VehicleAttributes{
+			Brand:           "A",
+			FabricationYear: 2005,
+		},
+	}, 3: {
+		Id: 3,
+		VehicleAttributes: internal.VehicleAttributes{
+			Brand:           "B",
+			FabricationYear: 2010,
+		},
+	}}
+	rp := repository.NewRepositoryReadVehicleMap(db)
+
+	t.Run("Find by brand A and with the year between 2000 and 2010", func(t *testing.T) {
+		// Given
+		expectedResult := map[int]internal.Vehicle{1: {
+			Id: 1,
+			VehicleAttributes: internal.VehicleAttributes{
+				Brand:           "A",
+				FabricationYear: 2008,
+			},
+		}, 2: {
+			Id: 2,
+			VehicleAttributes: internal.VehicleAttributes{
+				Brand:           "A",
+				FabricationYear: 2005,
+			},
+		}}
+		// When
+		result, err := rp.FindByBrandAndYearRange("A", 2000, 2010)
+		// Then
+		assert.Nil(t, err)
+		assert.Equal(t, expectedResult, result)
+	})
+
+	t.Run("Find by brand A and with the year between 2000 and 2006", func(t *testing.T) {
+		// Given
+		expectedResult := map[int]internal.Vehicle{2: {
+			Id: 2,
+			VehicleAttributes: internal.VehicleAttributes{
+				Brand:           "A",
+				FabricationYear: 2005,
+			},
+		}}
+		// When
+		result, err := rp.FindByBrandAndYearRange("A", 2000, 2006)
+		// Then
+		assert.Nil(t, err)
+		assert.Equal(t, expectedResult, result)
+	})
+
+	t.Run("Find by brand B and with the year between 2000 and 2010", func(t *testing.T) {
+		// Given
+		expectedResult := map[int]internal.Vehicle{3: {
+			Id: 3,
+			VehicleAttributes: internal.VehicleAttributes{
+				Brand:           "B",
+				FabricationYear: 2010,
+			},
+		}}
+		// When
+		result, err := rp.FindByBrandAndYearRange("B", 2000, 2010)
+		// Then
+		assert.Nil(t, err)
+		assert.Equal(t, expectedResult, result)
+	})
+}
