@@ -196,6 +196,82 @@ func TestServiceVehicleDefault_AverageMaxSpeedByBrand(t *testing.T) {
 	})
 }
 
+func TestServiceVehicleDefault_AverageCapacityByBrand(t *testing.T) {
+	t.Run("find two vehicles with an average capacity of 5", func(t *testing.T) {
+		// Given
+		rp := repository.NewVehicleMapMock()
+		rp.FindByBrandFunc = func(brand string) (v map[int]internal.Vehicle, err error) {
+			return map[int]internal.Vehicle{1: {
+				Id: 1,
+				VehicleAttributes: internal.VehicleAttributes{
+					Brand:           "A",
+					Model:           "B",
+					Registration:    "C",
+					Color:           "D",
+					FabricationYear: 1,
+					Capacity:        5,
+					MaxSpeed:        1,
+					FuelType:        "E",
+					Transmission:    "F",
+					Weight:          1,
+					Dimensions: internal.Dimensions{
+						Height: 1,
+						Length: 1,
+						Width:  1,
+					},
+				},
+			}, 2: {
+				Id: 2,
+				VehicleAttributes: internal.VehicleAttributes{
+					Brand:           "A",
+					Model:           "B",
+					Registration:    "C",
+					Color:           "D",
+					FabricationYear: 1,
+					Capacity:        5,
+					MaxSpeed:        5,
+					FuelType:        "E",
+					Transmission:    "F",
+					Weight:          1,
+					Dimensions: internal.Dimensions{
+						Height: 1,
+						Length: 1,
+						Width:  1,
+					},
+				},
+			}}, nil
+		}
+
+		sv := service.NewServiceVehicleDefault(rp)
+
+		expectedResult := 5
+		// When
+		result, err := sv.AverageCapacityByBrand("A")
+		// Then
+		assert.Nil(t, err)
+		assert.Equal(t, expectedResult, result)
+		assert.Equal(t, 1, rp.Spy.FindByBrand)
+	})
+
+	t.Run("no vehicles found", func(t *testing.T) {
+		// Given
+		rp := repository.NewVehicleMapMock()
+		rp.FindByBrandFunc = func(brand string) (v map[int]internal.Vehicle, err error) {
+			return map[int]internal.Vehicle{}, nil
+		}
+
+		sv := service.NewServiceVehicleDefault(rp)
+
+		expectedError := internal.ErrServiceNoVehicles
+		// When
+		_, err := sv.AverageCapacityByBrand("A")
+		// Then
+		assert.NotNil(t, err)
+		assert.Equal(t, expectedError, err)
+		assert.Equal(t, 1, rp.Spy.FindByBrand)
+	})
+}
+
 func TestServiceVehicleDefault_SearchByWeightRange(t *testing.T) {
 	t.Run("Find without query", func(t *testing.T) {
 		// Given
@@ -307,5 +383,4 @@ func TestServiceVehicleDefault_SearchByWeightRange(t *testing.T) {
 		assert.Equal(t, 0, rp.Spy.FindAll)
 		assert.Equal(t, 1, rp.Spy.FindByWeightRange)
 	})
-
 }
