@@ -150,3 +150,69 @@ func TestRepositoryReadVehicleMap_FindByBrandAndYearRange(t *testing.T) {
 		assert.Equal(t, expectedResult, result)
 	})
 }
+
+func TestRepositoryReadVehicleMap_FindByBrand(t *testing.T) {
+	// Given
+	db := map[int]internal.Vehicle{1: {
+		Id: 1,
+		VehicleAttributes: internal.VehicleAttributes{
+			Brand: "A",
+		},
+	}, 2: {
+		Id: 2,
+		VehicleAttributes: internal.VehicleAttributes{
+			Brand: "A",
+		},
+	}, 3: {
+		Id: 3,
+		VehicleAttributes: internal.VehicleAttributes{
+			Brand: "B",
+		},
+	}}
+	rp := repository.NewRepositoryReadVehicleMap(db)
+
+	t.Run("Find by brand A", func(t *testing.T) {
+		// Given
+		expectedResult := map[int]internal.Vehicle{1: {
+			Id: 1,
+			VehicleAttributes: internal.VehicleAttributes{
+				Brand: "A",
+			},
+		}, 2: {
+			Id: 2,
+			VehicleAttributes: internal.VehicleAttributes{
+				Brand: "A",
+			},
+		}}
+		// When
+		result, err := rp.FindByBrand("A")
+		// Then
+		assert.Nil(t, err)
+		assert.Equal(t, expectedResult, result)
+	})
+
+	t.Run("Find by brand B", func(t *testing.T) {
+		// Given
+		expectedResult := map[int]internal.Vehicle{3: {
+			Id: 3,
+			VehicleAttributes: internal.VehicleAttributes{
+				Brand: "B",
+			},
+		}}
+		// When
+		result, err := rp.FindByBrand("B")
+		// Then
+		assert.Nil(t, err)
+		assert.Equal(t, expectedResult, result)
+	})
+
+	t.Run("Brand not found", func(t *testing.T) {
+		// Given
+		expectedResult := map[int]internal.Vehicle{}
+		// When
+		result, err := rp.FindByBrand("C")
+		// Then
+		assert.Nil(t, err)
+		assert.Equal(t, expectedResult, result)
+	})
+}
