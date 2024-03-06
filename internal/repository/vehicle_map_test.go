@@ -236,3 +236,74 @@ func TestRepositoryReadVehicleMap_FindByBrand(t *testing.T) {
 		assert.Equal(t, expectedResult, result)
 	})
 }
+
+func TestRepositoryReadVehicleMap_FindByWeightRange(t *testing.T) {
+	// Given
+	db := map[int]internal.Vehicle{1: {
+		Id: 1,
+		VehicleAttributes: internal.VehicleAttributes{
+			Weight: 1,
+		},
+	}, 2: {
+		Id: 2,
+		VehicleAttributes: internal.VehicleAttributes{
+			Weight: 10,
+		},
+	}, 3: {
+		Id: 3,
+		VehicleAttributes: internal.VehicleAttributes{
+			Weight: 4,
+		},
+	}}
+	rp := repository.NewRepositoryReadVehicleMap(db)
+
+	t.Run("Find by 0 to 10 weight range", func(t *testing.T) {
+		// Given
+		expectedResult := map[int]internal.Vehicle{1: {
+			Id: 1,
+			VehicleAttributes: internal.VehicleAttributes{
+				Weight: 1,
+			},
+		}, 2: {
+			Id: 2,
+			VehicleAttributes: internal.VehicleAttributes{
+				Weight: 10,
+			},
+		}, 3: {
+			Id: 3,
+			VehicleAttributes: internal.VehicleAttributes{
+				Weight: 4,
+			},
+		}}
+		// When
+		result, err := rp.FindByWeightRange(0, 10)
+		// Then
+		assert.Nil(t, err)
+		assert.Equal(t, expectedResult, result)
+	})
+
+	t.Run("Find by 5 to 10 weight range", func(t *testing.T) {
+		// Given
+		expectedResult := map[int]internal.Vehicle{2: {
+			Id: 2,
+			VehicleAttributes: internal.VehicleAttributes{
+				Weight: 10,
+			},
+		}}
+		// When
+		result, err := rp.FindByWeightRange(5, 10)
+		// Then
+		assert.Nil(t, err)
+		assert.Equal(t, expectedResult, result)
+	})
+
+	t.Run("Vehicles not found", func(t *testing.T) {
+		// Given
+		expectedResult := map[int]internal.Vehicle{}
+		// When
+		result, err := rp.FindByWeightRange(11, 30)
+		// Then
+		assert.Nil(t, err)
+		assert.Equal(t, expectedResult, result)
+	})
+}
