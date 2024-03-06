@@ -149,6 +149,26 @@ func TestRepositoryReadVehicleMap_FindByBrandAndYearRange(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, expectedResult, result)
 	})
+
+	t.Run("Brand not found", func(t *testing.T) {
+		// Given
+		expectedResult := map[int]internal.Vehicle{}
+		// When
+		result, err := rp.FindByBrandAndYearRange("C", 2000, 2010)
+		// Then
+		assert.Nil(t, err)
+		assert.Equal(t, expectedResult, result)
+	})
+
+	t.Run("Year range not found", func(t *testing.T) {
+		// Given
+		expectedResult := map[int]internal.Vehicle{}
+		// When
+		result, err := rp.FindByBrandAndYearRange("A", 2000, 2002)
+		// Then
+		assert.Nil(t, err)
+		assert.Equal(t, expectedResult, result)
+	})
 }
 
 func TestRepositoryReadVehicleMap_FindByBrand(t *testing.T) {
