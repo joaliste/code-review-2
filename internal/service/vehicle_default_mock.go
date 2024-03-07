@@ -10,11 +10,13 @@ type VehicleDefaultMock struct {
 	FindByColorAndYearFunc      func(color string, fabricationYear int) (v map[int]internal.Vehicle, err error)
 	FindByBrandAndYearRangeFunc func(brand string, startYear int, endYear int) (v map[int]internal.Vehicle, err error)
 	AverageMaxSpeedByBrandFunc  func(brand string) (a float64, err error)
+	AverageCapacityByBrandFunc  func(brand string) (a int, err error)
 
 	Spy struct {
 		FindByColorAndYear      int
 		FindByBrandAndYearRange int
 		AverageMaxSpeedByBrand  int
+		AverageCapacityByBrand  int
 	}
 }
 
@@ -34,8 +36,8 @@ func (v2 *VehicleDefaultMock) AverageMaxSpeedByBrand(brand string) (a float64, e
 }
 
 func (v2 *VehicleDefaultMock) AverageCapacityByBrand(brand string) (a int, err error) {
-	//TODO implement me
-	panic("implement me")
+	v2.Spy.AverageCapacityByBrand++
+	return v2.AverageCapacityByBrandFunc(brand)
 }
 
 func (v2 *VehicleDefaultMock) SearchByWeightRange(query internal.SearchQuery, ok bool) (v map[int]internal.Vehicle, err error) {
