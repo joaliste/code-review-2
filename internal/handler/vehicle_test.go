@@ -445,3 +445,172 @@ func TestHandlerVehicle_AverageCapacityByBrand(t *testing.T) {
 		require.Equal(t, 1, sv.Spy.AverageCapacityByBrand)
 	})
 }
+
+func TestHandlerVehicle_SearchByWeightRange(t *testing.T) {
+	t.Run("successfully search by weight range", func(t *testing.T) {
+		// Given
+		sv := service.NewVehicleDefaultMock()
+		sv.SearchByWeightRangeFunc = func(query internal.SearchQuery, ok bool) (v map[int]internal.Vehicle, err error) {
+			return map[int]internal.Vehicle{1: {
+				Id: 1,
+				VehicleAttributes: internal.VehicleAttributes{
+					Brand:           "A",
+					Model:           "B",
+					Registration:    "C",
+					Color:           "D",
+					FabricationYear: 1,
+					Capacity:        1,
+					MaxSpeed:        1,
+					FuelType:        "E",
+					Transmission:    "F",
+					Weight:          1,
+					Dimensions: internal.Dimensions{
+						Height: 1,
+						Length: 1,
+						Width:  1,
+					},
+				},
+			}}, nil
+		}
+
+		hd := handler.NewHandlerVehicle(sv)
+
+		hdFunc := hd.SearchByWeightRange()
+
+		expectedBodyOutput := `{"data":{"1":{"Id":1,"Brand":"A","Model":"B","Registration":"C","Color":"D","FabricationYear":1,"Capacity":1,"MaxSpeed":1,"FuelType":"E","Transmission":"F","Weight":1,"Height":1,"Length":1,"Width":1}},"message":"vehicles found"}`
+		expectedStatusCode := http.StatusOK
+		expectedHeaderOutput := http.Header{
+			"Content-Type": []string{"application/json; charset=utf-8"},
+		}
+		// When
+		req := httptest.NewRequest(http.MethodGet, "/vehicles/weight?weight_min=0&weight_max=20", nil)
+		res := httptest.NewRecorder()
+		hdFunc(res, req)
+		// Then
+		require.Equal(t, expectedStatusCode, res.Code)
+		require.JSONEq(t, expectedBodyOutput, res.Body.String())
+		require.Equal(t, expectedHeaderOutput, res.Header())
+		require.Equal(t, 1, sv.Spy.SearchByWeightRange)
+	})
+
+	t.Run("successfully search without weight range", func(t *testing.T) {
+		// Given
+		sv := service.NewVehicleDefaultMock()
+		sv.SearchByWeightRangeFunc = func(query internal.SearchQuery, ok bool) (v map[int]internal.Vehicle, err error) {
+			return map[int]internal.Vehicle{1: {
+				Id: 1,
+				VehicleAttributes: internal.VehicleAttributes{
+					Brand:           "A",
+					Model:           "B",
+					Registration:    "C",
+					Color:           "D",
+					FabricationYear: 1,
+					Capacity:        1,
+					MaxSpeed:        1,
+					FuelType:        "E",
+					Transmission:    "F",
+					Weight:          1,
+					Dimensions: internal.Dimensions{
+						Height: 1,
+						Length: 1,
+						Width:  1,
+					},
+				},
+			}}, nil
+		}
+
+		hd := handler.NewHandlerVehicle(sv)
+
+		hdFunc := hd.SearchByWeightRange()
+
+		expectedBodyOutput := `{"data":{"1":{"Id":1,"Brand":"A","Model":"B","Registration":"C","Color":"D","FabricationYear":1,"Capacity":1,"MaxSpeed":1,"FuelType":"E","Transmission":"F","Weight":1,"Height":1,"Length":1,"Width":1}},"message":"vehicles found"}`
+		expectedStatusCode := http.StatusOK
+		expectedHeaderOutput := http.Header{
+			"Content-Type": []string{"application/json; charset=utf-8"},
+		}
+		// When
+		req := httptest.NewRequest(http.MethodGet, "/vehicles/weight", nil)
+		res := httptest.NewRecorder()
+		hdFunc(res, req)
+		// Then
+		require.Equal(t, expectedStatusCode, res.Code)
+		require.JSONEq(t, expectedBodyOutput, res.Body.String())
+		require.Equal(t, expectedHeaderOutput, res.Header())
+		require.Equal(t, 1, sv.Spy.SearchByWeightRange)
+	})
+
+	t.Run("Invalid weight_min", func(t *testing.T) {
+		// Given
+		sv := service.NewVehicleDefaultMock()
+
+		hd := handler.NewHandlerVehicle(sv)
+
+		hdFunc := hd.SearchByWeightRange()
+
+		expectedBodyOutput := `{"message":"invalid weight_min", "status":"Bad Request"}`
+		expectedStatusCode := http.StatusBadRequest
+		expectedHeaderOutput := http.Header{
+			"Content-Type": []string{"application/json"},
+		}
+		// When
+		req := httptest.NewRequest(http.MethodGet, "/vehicles/weight?weight_min=invalid&weight_max=20", nil)
+		res := httptest.NewRecorder()
+		hdFunc(res, req)
+		// Then
+		require.Equal(t, expectedStatusCode, res.Code)
+		require.JSONEq(t, expectedBodyOutput, res.Body.String())
+		require.Equal(t, expectedHeaderOutput, res.Header())
+		require.Equal(t, 0, sv.Spy.SearchByWeightRange)
+	})
+
+	t.Run("Invalid weight_max", func(t *testing.T) {
+		// Given
+		sv := service.NewVehicleDefaultMock()
+
+		hd := handler.NewHandlerVehicle(sv)
+
+		hdFunc := hd.SearchByWeightRange()
+
+		expectedBodyOutput := `{"message":"invalid weight_max", "status":"Bad Request"}`
+		expectedStatusCode := http.StatusBadRequest
+		expectedHeaderOutput := http.Header{
+			"Content-Type": []string{"application/json"},
+		}
+		// When
+		req := httptest.NewRequest(http.MethodGet, "/vehicles/weight?weight_min=0&weight_max=invalid", nil)
+		res := httptest.NewRecorder()
+		hdFunc(res, req)
+		// Then
+		require.Equal(t, expectedStatusCode, res.Code)
+		require.JSONEq(t, expectedBodyOutput, res.Body.String())
+		require.Equal(t, expectedHeaderOutput, res.Header())
+		require.Equal(t, 0, sv.Spy.SearchByWeightRange)
+	})
+
+	t.Run("Unknown error", func(t *testing.T) {
+		// Given
+		sv := service.NewVehicleDefaultMock()
+		sv.SearchByWeightRangeFunc = func(query internal.SearchQuery, ok bool) (v map[int]internal.Vehicle, err error) {
+			return nil, errors.New("unknown error")
+		}
+
+		hd := handler.NewHandlerVehicle(sv)
+
+		hdFunc := hd.SearchByWeightRange()
+
+		expectedBodyOutput := `{"message":"internal error", "status": "Internal Server Error"}`
+		expectedStatusCode := http.StatusInternalServerError
+		expectedHeaderOutput := http.Header{
+			"Content-Type": []string{"application/json"},
+		}
+		// When
+		req := httptest.NewRequest(http.MethodGet, "/vehicles/average_capacity/brand/A", nil)
+		res := httptest.NewRecorder()
+		hdFunc(res, req)
+		// Then
+		require.Equal(t, expectedStatusCode, res.Code)
+		require.JSONEq(t, expectedBodyOutput, res.Body.String())
+		require.Equal(t, expectedHeaderOutput, res.Header())
+		require.Equal(t, 1, sv.Spy.SearchByWeightRange)
+	})
+}
