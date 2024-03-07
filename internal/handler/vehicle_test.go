@@ -261,3 +261,95 @@ func TestHandlerVehicle_FindByBrandAndYearRange(t *testing.T) {
 		require.Equal(t, 1, sv.Spy.FindByBrandAndYearRange)
 	})
 }
+
+func TestHandlerVehicle_AverageMaxSpeedByBrand(t *testing.T) {
+	t.Run("Find average by a brand", func(t *testing.T) {
+		// Given
+		sv := service.NewVehicleDefaultMock()
+		sv.AverageMaxSpeedByBrandFunc = func(brand string) (a float64, err error) {
+			return 3.14, nil
+		}
+
+		hd := handler.NewHandlerVehicle(sv)
+
+		hdFunc := hd.AverageMaxSpeedByBrand()
+
+		expectedBodyOutput := `{"data":3.14,"message":"average max speed found"}`
+		expectedStatusCode := http.StatusOK
+		expectedHeaderOutput := http.Header{
+			"Content-Type": []string{"application/json; charset=utf-8"},
+		}
+		// When
+		req := httptest.NewRequest(http.MethodGet, "/vehicles/average_speed/brand/A", nil)
+		chiCtx := chi.NewRouteContext()
+		chiCtx.URLParams.Add("brand", "A")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, chiCtx))
+		res := httptest.NewRecorder()
+		hdFunc(res, req)
+		// Then
+		require.Equal(t, expectedStatusCode, res.Code)
+		require.JSONEq(t, expectedBodyOutput, res.Body.String())
+		require.Equal(t, expectedHeaderOutput, res.Header())
+		require.Equal(t, 1, sv.Spy.AverageMaxSpeedByBrand)
+	})
+
+	t.Run("Vehicles not found", func(t *testing.T) {
+		// Given
+		sv := service.NewVehicleDefaultMock()
+		sv.AverageMaxSpeedByBrandFunc = func(brand string) (a float64, err error) {
+			return 0.0, internal.ErrServiceNoVehicles
+		}
+
+		hd := handler.NewHandlerVehicle(sv)
+
+		hdFunc := hd.AverageMaxSpeedByBrand()
+
+		expectedBodyOutput := `{"message":"vehicles not found", "status": "Not Found"}`
+		expectedStatusCode := http.StatusNotFound
+		expectedHeaderOutput := http.Header{
+			"Content-Type": []string{"application/json"},
+		}
+		// When
+		req := httptest.NewRequest(http.MethodGet, "/vehicles/average_speed/brand/A", nil)
+		chiCtx := chi.NewRouteContext()
+		chiCtx.URLParams.Add("brand", "A")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, chiCtx))
+		res := httptest.NewRecorder()
+		hdFunc(res, req)
+		// Then
+		require.Equal(t, expectedStatusCode, res.Code)
+		require.JSONEq(t, expectedBodyOutput, res.Body.String())
+		require.Equal(t, expectedHeaderOutput, res.Header())
+		require.Equal(t, 1, sv.Spy.AverageMaxSpeedByBrand)
+	})
+
+	t.Run("Unknown error", func(t *testing.T) {
+		// Given
+		sv := service.NewVehicleDefaultMock()
+		sv.AverageMaxSpeedByBrandFunc = func(brand string) (a float64, err error) {
+			return 0.0, errors.New("unknown error")
+		}
+
+		hd := handler.NewHandlerVehicle(sv)
+
+		hdFunc := hd.AverageMaxSpeedByBrand()
+
+		expectedBodyOutput := `{"message":"internal error", "status": "Internal Server Error"}`
+		expectedStatusCode := http.StatusInternalServerError
+		expectedHeaderOutput := http.Header{
+			"Content-Type": []string{"application/json"},
+		}
+		// When
+		req := httptest.NewRequest(http.MethodGet, "/vehicles/average_speed/brand/A", nil)
+		chiCtx := chi.NewRouteContext()
+		chiCtx.URLParams.Add("brand", "A")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, chiCtx))
+		res := httptest.NewRecorder()
+		hdFunc(res, req)
+		// Then
+		require.Equal(t, expectedStatusCode, res.Code)
+		require.JSONEq(t, expectedBodyOutput, res.Body.String())
+		require.Equal(t, expectedHeaderOutput, res.Header())
+		require.Equal(t, 1, sv.Spy.AverageMaxSpeedByBrand)
+	})
+}
