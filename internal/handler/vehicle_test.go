@@ -14,7 +14,7 @@ import (
 )
 
 func TestHandlerVehicle_FindByColorAndYear(t *testing.T) {
-	t.Run("Find a vehicle", func(t *testing.T) {
+	t.Run("Find a vehicle by color and year", func(t *testing.T) {
 		// Given
 		sv := service.NewVehicleDefaultMock()
 		sv.FindByColorAndYearFunc = func(color string, fabricationYear int) (v map[int]internal.Vehicle, err error) {
@@ -119,5 +119,145 @@ func TestHandlerVehicle_FindByColorAndYear(t *testing.T) {
 		require.JSONEq(t, expectedBodyOutput, res.Body.String())
 		require.Equal(t, expectedHeaderOutput, res.Header())
 		require.Equal(t, 1, sv.Spy.FindByColorAndYear)
+	})
+}
+
+func TestHandlerVehicle_FindByBrandAndYearRange(t *testing.T) {
+	t.Run("Find a vehicle by brand and year", func(t *testing.T) {
+		// Given
+		sv := service.NewVehicleDefaultMock()
+		sv.FindByBrandAndYearRangeFunc = func(brand string, startYear int, endYear int) (v map[int]internal.Vehicle, err error) {
+			return map[int]internal.Vehicle{1: {
+				Id: 1,
+				VehicleAttributes: internal.VehicleAttributes{
+					Brand:           "A",
+					Model:           "B",
+					Registration:    "C",
+					Color:           "D",
+					FabricationYear: 1,
+					Capacity:        1,
+					MaxSpeed:        1,
+					FuelType:        "E",
+					Transmission:    "F",
+					Weight:          1,
+					Dimensions: internal.Dimensions{
+						Height: 1,
+						Length: 1,
+						Width:  1,
+					},
+				},
+			}}, nil
+		}
+		hd := handler.NewHandlerVehicle(sv)
+
+		hdFunc := hd.FindByBrandAndYearRange()
+
+		expectedBodyOutput := `{"data":{"1":{"Id":1,"Brand":"A","Model":"B","Registration":"C","Color":"D","FabricationYear":1,"Capacity":1,"MaxSpeed":1,"FuelType":"E","Transmission":"F","Weight":1,"Height":1,"Length":1,"Width":1}},"message":"vehicles found"}`
+		expectedStatusCode := http.StatusOK
+		expectedHeaderOutput := http.Header{
+			"Content-Type": []string{"application/json; charset=utf-8"},
+		}
+		// When
+		req := httptest.NewRequest(http.MethodGet, "/vehicles/brand/A/between/0/2", nil)
+		chiCtx := chi.NewRouteContext()
+		chiCtx.URLParams.Add("brand", "A")
+		chiCtx.URLParams.Add("start_year", "0")
+		chiCtx.URLParams.Add("end_year", "2")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, chiCtx))
+		res := httptest.NewRecorder()
+		hdFunc(res, req)
+		// Then
+		require.Equal(t, expectedStatusCode, res.Code)
+		require.JSONEq(t, expectedBodyOutput, res.Body.String())
+		require.Equal(t, expectedHeaderOutput, res.Header())
+		require.Equal(t, 1, sv.Spy.FindByBrandAndYearRange)
+	})
+
+	t.Run("Invalid start year", func(t *testing.T) {
+		// Given
+		sv := service.NewVehicleDefaultMock()
+		hd := handler.NewHandlerVehicle(sv)
+
+		hdFunc := hd.FindByBrandAndYearRange()
+
+		expectedBodyOutput := `{"message":"invalid start_year", "status":"Bad Request"}`
+		expectedStatusCode := http.StatusBadRequest
+		expectedHeaderOutput := http.Header{
+			"Content-Type": []string{"application/json"},
+		}
+		// When
+		req := httptest.NewRequest(http.MethodGet, "/vehicles/brand/A/between/A/2", nil)
+		chiCtx := chi.NewRouteContext()
+		chiCtx.URLParams.Add("brand", "A")
+		chiCtx.URLParams.Add("start_year", "A")
+		chiCtx.URLParams.Add("end_year", "2")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, chiCtx))
+		res := httptest.NewRecorder()
+		hdFunc(res, req)
+		// Then
+		require.Equal(t, expectedStatusCode, res.Code)
+		require.JSONEq(t, expectedBodyOutput, res.Body.String())
+		require.Equal(t, expectedHeaderOutput, res.Header())
+		require.Equal(t, 0, sv.Spy.FindByBrandAndYearRange)
+	})
+
+	t.Run("Invalid end year", func(t *testing.T) {
+		// Given
+		sv := service.NewVehicleDefaultMock()
+		hd := handler.NewHandlerVehicle(sv)
+
+		hdFunc := hd.FindByBrandAndYearRange()
+
+		expectedBodyOutput := `{"message":"invalid end_year", "status":"Bad Request"}`
+		expectedStatusCode := http.StatusBadRequest
+		expectedHeaderOutput := http.Header{
+			"Content-Type": []string{"application/json"},
+		}
+		// When
+		req := httptest.NewRequest(http.MethodGet, "/vehicles/brand/A/between/0/A", nil)
+		chiCtx := chi.NewRouteContext()
+		chiCtx.URLParams.Add("brand", "A")
+		chiCtx.URLParams.Add("start_year", "0")
+		chiCtx.URLParams.Add("end_year", "A")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, chiCtx))
+		res := httptest.NewRecorder()
+		hdFunc(res, req)
+		// Then
+		require.Equal(t, expectedStatusCode, res.Code)
+		require.JSONEq(t, expectedBodyOutput, res.Body.String())
+		require.Equal(t, expectedHeaderOutput, res.Header())
+		require.Equal(t, 0, sv.Spy.FindByBrandAndYearRange)
+	})
+
+	t.Run("Unknown error", func(t *testing.T) {
+		// Given
+		sv := service.NewVehicleDefaultMock()
+		sv.FindByBrandAndYearRangeFunc = func(color string, startYear, endYear int) (v map[int]internal.Vehicle, err error) {
+			return nil, errors.New("unknown error")
+		}
+
+		hd := handler.NewHandlerVehicle(sv)
+
+		hdFunc := hd.FindByBrandAndYearRange()
+
+		expectedBodyOutput := `{"message":"internal error", "status":"Internal Server Error"}`
+		expectedStatusCode := http.StatusInternalServerError
+		expectedHeaderOutput := http.Header{
+			"Content-Type": []string{"application/json"},
+		}
+		// When
+		req := httptest.NewRequest(http.MethodGet, "/vehicles/brand/A/between/0/1", nil)
+		chiCtx := chi.NewRouteContext()
+		chiCtx.URLParams.Add("brand", "A")
+		chiCtx.URLParams.Add("start_year", "0")
+		chiCtx.URLParams.Add("end_year", "2")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, chiCtx))
+		res := httptest.NewRecorder()
+		hdFunc(res, req)
+		// Then
+		require.Equal(t, expectedStatusCode, res.Code)
+		require.JSONEq(t, expectedBodyOutput, res.Body.String())
+		require.Equal(t, expectedHeaderOutput, res.Header())
+		require.Equal(t, 1, sv.Spy.FindByBrandAndYearRange)
 	})
 }
